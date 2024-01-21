@@ -1,6 +1,4 @@
-import { Prisma } from "@prisma/client";
 import prisma from "../lib/prisma.lib";
-import { iMessage } from "../interface/iMessage.interface";
 import { MessageUtils } from "../utils/message.utils";
 import { iMailRequest } from "../interface/iMails.interface";
 import { CONST_STATUS_ALL } from "../constant/status.constant";
@@ -23,6 +21,11 @@ export class EmailSendModel {
   }
 
   async setEmail(data: iMailRequest): Promise<iMailRequest> {
+    try {
+      await prisma.$connect();
+    } catch (error) {
+      console.log("Conexión abierta", error);
+    }
     try {
       const dataCreate = {
         id_email_lot: <number>this.idLote,
@@ -58,11 +61,7 @@ export class EmailSendModel {
         subject: "",
       });
       for (const item of data) {
-        if (
-          !item.id_email_send ||
-          !item.number_lote
-        )
-          continue;
+        if (!item.id_email_send || !item.number_lote) continue;
         // Obtenemos el correo electrónico
         const getEmail = await this.conn.findUnique({
           where: {

@@ -51,9 +51,14 @@ export class EmailController {
         setLote.payload.id_email_lot,
         dataCreateLote.lot_number
       );
+      const getEmailsCreated: iMailRequest[] = [];
+      for (const _email of emailsToSend) {
+        getEmailsCreated.push(await modelEmailSend.setEmail(_email));
+      }
+      /*
       const getEmailsCreated = await Promise.all(
         emailsToSend.map((email) => modelEmailSend.setEmail(email))
-      );
+      );*/
       if (process.env?.FLAG_TEST === CONST_FLAG_TEST.no_test)
         EmailController.sendEmailsAsync(
           getEmailsCreated,
