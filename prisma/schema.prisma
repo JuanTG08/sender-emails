@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model companies {
+  id_company    Int          @id @default(autoincrement())
+  name_company  String       @db.VarChar(64)
+  email_company String       @db.VarChar(255)
+  secret_key    String       @db.VarChar(20)
+  createdAt     DateTime?    @default(now()) @db.Timestamp(0)
+  updatedAt     DateTime?    @default(now()) @db.Timestamp(0)
+  email_lots    email_lots[]
+}
+
+model email_lots {
+  id_email_lot        Int               @id @default(autoincrement())
+  lot_number          String            @unique(map: "lot_number") @db.VarChar(36)
+  id_company          Int
+  email_from          String            @db.VarChar(255)
+  total_email_to_send Int
+  id_status           Int
+  createdAt           DateTime?         @default(now()) @db.Timestamp(0)
+  updatedAt           DateTime?         @default(now()) @db.Timestamp(0)
+  companies           companies         @relation(fields: [id_company], references: [id_company], onDelete: NoAction, onUpdate: NoAction, map: "email_lots_ibfk_1")
+  email_lots_status   email_lots_status @relation(fields: [id_status], references: [id_email_lot_status], onDelete: NoAction, onUpdate: NoAction, map: "email_lots_ibfk_2")
+  email_send          email_send[]
+
+  @@index([id_company], map: "id_company")
+  @@index([id_status], map: "id_status")
+}
+
+model email_lots_status {
+  id_email_lot_status Int          @id @default(autoincrement())
+  name                String?      @db.VarChar(32)
+  email_lots          email_lots[]
+}
+
+model email_send {
+  id_email_send     Int               @id @default(autoincrement())
+  id_email_lot      Int
+  email_number      String?           @db.VarChar(64)
+  email_to          String            @db.VarChar(255)
+  attempts_count    Int?              @default(0)
+  id_status         Int
+  date_sended       DateTime?         @db.Timestamp(0)
+  createdAt         DateTime?         @default(now()) @db.Timestamp(0)
+  updatedAt         DateTime?         @default(now()) @db.Timestamp(0)
+  email_lots        email_lots        @relation(fields: [id_email_lot], references: [id_email_lot], onDelete: NoAction, onUpdate: NoAction, map: "email_send_ibfk_1")
+  email_send_status email_send_status @relation(fields: [id_status], references: [id_email_status], onDelete: NoAction, onUpdate: NoAction, map: "email_send_ibfk_2")
+
+  @@index([id_email_lot], map: "id_email_lot")
+  @@index([id_status], map: "id_status")
+}
+
+model email_send_status {
+  id_email_status Int          @id @default(autoincrement())
+  name            String?      @db.VarChar(32)
+  email_send      email_send[]
+}
