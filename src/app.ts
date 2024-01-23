@@ -17,11 +17,13 @@ app.use(express.urlencoded({ extended: true, limit: "500mb" }));
 app.use(cors());
 
 import email_routes from "./routes/email.routes";
+import lote_routes from "./routes/lote.routes";
 import default_routes from "./routes/default.routes";
 import { AuthMiddleware } from "./middleware/auth.middleware";
 
-app.use(AuthMiddleware.validateApiKey)
+app.use(AuthMiddleware.validateApiKey);
 app.use("/api/email", email_routes);
+app.use("/api/lote", lote_routes);
 
 app.all("*", default_routes);
 

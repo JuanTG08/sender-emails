@@ -6,8 +6,6 @@ const router = Router();
 
 const ctrlEmail = new EmailController();
 
-router
-  .route("/handler-send-emails")
-  .post(ctrlEmail.sendEmails)
+router.route("/handler-send-emails").post(ctrlEmail.sendEmails);
 
 export default router;
