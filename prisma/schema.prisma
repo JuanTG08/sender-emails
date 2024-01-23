@@ -45,6 +45,7 @@ model email_send {
   id_email_lot      Int
   email_number      String?           @db.VarChar(64)
   email_to          String            @db.VarChar(255)
+  response          String?           @db.VarChar(255)
   attempts_count    Int?              @default(0)
   id_status         Int
   date_sended       DateTime?         @db.Timestamp(0)

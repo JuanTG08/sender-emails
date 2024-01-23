@@ -4,6 +4,7 @@ import { iMailRequest } from "../interface/iMails.interface";
 import { CONST_STATUS_ALL } from "../constant/status.constant";
 import Mails from "../lib/emails.lib";
 import { CONST_STATUS_CODE } from "../constant/status_code.constant";
+import { DateUtils } from "../utils/date.utils";
 
 export class EmailSendModel {
   private conn;
@@ -11,13 +12,23 @@ export class EmailSendModel {
 
   private idLote?: number;
   private numberLote?: string;
+  private emailFrom?: string;
 
-  constructor(idLote?: number, numberLote?: string) {
+  constructor({
+    idLote,
+    numberLote,
+    emailFrom,
+  }: {
+    idLote?: number;
+    numberLote?: string;
+    emailFrom?: string;
+  }) {
     const conn = prisma;
     this.conn = conn.email_send;
     this._prisma = conn;
     this.idLote = idLote;
     this.numberLote = numberLote;
+    this.emailFrom = emailFrom;
   }
 
   async setEmail(data: iMailRequest): Promise<iMailRequest> {
@@ -51,17 +62,31 @@ export class EmailSendModel {
   }
 
   async sendEmails(data: iMailRequest[]) {
-    const emailsNotSended: iMailRequest[] = [];
-    const emailsSended: iMailRequest[] = [];
-    const emailsError: iMailRequest[] = [];
+    const emailsNotSended: string[] = [];
+    const emailsSended: string[] = [];
+    const emailsError: string[] = [];
+    let tableHTML = ``;
     try {
+      if (!this.emailFrom) throw new Error("No se ha configurado el correo");
       const _mails = new Mails({
+        fromEmail: this.emailFrom,
         html: "",
         toEmail: "",
         subject: "",
       });
       for (const item of data) {
-        if (!item.id_email_send || !item.number_lote) continue;
+        if (!item.id_email_send || !item.number_lote) {
+          tableHTML += `
+            <tr>
+              <td>${DateUtils.formatearFechaHora(new Date())}</td>
+              <td>${item.email}</td>
+              <td>${item.subject}</td>
+              <td>${CONST_STATUS_ALL.email_send_status.not_sended.name}</td>
+            </tr>
+          `;
+          emailsError.push(item.email);
+          continue;
+        }
         // Obtenemos el correo electrónico
         const getEmail = await this.conn.findUnique({
           where: {
@@ -73,7 +98,15 @@ export class EmailSendModel {
         });
         if (!getEmail) {
           // Error ya que no encontró el correo electrónico
-          emailsError.push(item);
+          emailsError.push(item.email);
+          tableHTML += `
+            <tr>
+              <td>${DateUtils.formatearFechaHora(new Date())}</td>
+              <td>${item.email}</td>
+              <td>${item.subject}</td>
+              <td>${CONST_STATUS_ALL.email_send_status.not_sended.name}</td>
+            </tr>
+          `;
           continue;
         }
         _mails.setEmailTo(item.email);
@@ -90,12 +123,21 @@ export class EmailSendModel {
             data: {
               attempts_count: <number>getEmail.attempts_count + 1,
               id_status: CONST_STATUS_ALL.email_send_status.not_sended.id,
+              response: JSON.stringify(sendEmail.payload),
             },
             where: {
               id_email_send: item.id_email_send,
             },
           });
-          emailsNotSended.push(item);
+          emailsNotSended.push(item.email);
+          tableHTML += `
+            <tr>
+              <td>${DateUtils.formatearFechaHora(new Date())}</td>
+              <td>${item.email}</td>
+              <td>${item.subject}</td>
+              <td>${CONST_STATUS_ALL.email_send_status.not_sended.name}</td>
+            </tr>
+          `;
           continue;
         }
         await this.conn.update({
@@ -104,17 +146,27 @@ export class EmailSendModel {
             id_status: CONST_STATUS_ALL.email_send_status.sended.id,
             email_number: sendEmail.payload.messageId,
             date_sended: new Date(),
+            response: sendEmail.payload?.response,
           },
           where: {
             id_email_send: item.id_email_send,
           },
         });
-        emailsSended.push(item);
+        emailsSended.push(item.email);
+        tableHTML += `
+          <tr>
+            <td>${DateUtils.formatearFechaHora(new Date())}</td>
+            <td>${item.email}</td>
+            <td>${item.subject}</td>
+            <td>${CONST_STATUS_ALL.email_send_status.sended.name}</td>
+          </tr>
+        `;
       }
       return MessageUtils(false, 200, "Correos enviados", {
         emailsSended,
         emailsNotSended,
         emailsError,
+        tableHTML,
       });
     } catch (error) {
       console.log(error);
@@ -127,6 +179,7 @@ export class EmailSendModel {
           emailsSended,
           emailsNotSended,
           emailsError,
+          tableHTML,
         }
       );
     }

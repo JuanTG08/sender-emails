@@ -3,7 +3,6 @@ import { config } from "dotenv";
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
-import path from "path";
 config();
 
 // Creamos la variable APP para el inicio del servidor
@@ -19,6 +18,9 @@ app.use(cors());
 
 import email_routes from "./routes/email.routes";
 import default_routes from "./routes/default.routes";
+import { AuthMiddleware } from "./middleware/auth.middleware";
+
+app.use(AuthMiddleware.validateApiKey)
 app.use("/api/email", email_routes);
 
 app.all("*", default_routes);

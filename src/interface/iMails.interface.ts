@@ -1,5 +1,6 @@
 export interface iMails {
   toEmail: string | any | undefined;
+  fromEmail: string;
   subject?: string;
   message?: string;
   html?: string;
