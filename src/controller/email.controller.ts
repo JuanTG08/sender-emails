@@ -87,6 +87,7 @@ export class EmailController {
     try {
       const modelEmailSend = new EmailSendModel({
         emailFrom,
+        numberLote,
       });
       const sendEmails = await modelEmailSend.sendEmails(emails);
       if (sendEmails.error || sendEmails.statusCode != 200) {

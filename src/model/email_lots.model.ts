@@ -34,4 +34,22 @@ export class EmailLotsModel {
       return MessageUtils(true, 500, "Error");
     }
   }
+
+  async updateStatusLote(numberLote: string, status: number) {
+    try {
+      await this.conn.update({
+        where: {
+          lot_number: numberLote,
+        },
+        data: {
+          id_status: status,
+        },
+      });
+      await this._prisma.$disconnect();
+      return MessageUtils(false, 200, "Ok");
+    } catch (error) {
+      await this._prisma.$disconnect();
+      return MessageUtils(true, 500, "Error");
+    }
+  }
 }

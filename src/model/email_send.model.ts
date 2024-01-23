@@ -5,6 +5,7 @@ import { CONST_STATUS_ALL } from "../constant/status.constant";
 import Mails from "../lib/emails.lib";
 import { CONST_STATUS_CODE } from "../constant/status_code.constant";
 import { DateUtils } from "../utils/date.utils";
+import { EmailLotsModel } from "./email_lots.model";
 
 export class EmailSendModel {
   private conn;
@@ -162,6 +163,11 @@ export class EmailSendModel {
           </tr>
         `;
       }
+      const modelEmailLote = new EmailLotsModel();
+      await modelEmailLote.updateStatusLote(
+        <string>this.numberLote,
+        CONST_STATUS_ALL.email_lots_status.ended.id
+      );
       return MessageUtils(false, 200, "Correos enviados", {
         emailsSended,
         emailsNotSended,
@@ -171,6 +177,11 @@ export class EmailSendModel {
     } catch (error) {
       console.log(error);
       await this._prisma.$disconnect();
+      const modelEmailLote = new EmailLotsModel();
+      await modelEmailLote.updateStatusLote(
+        <string>this.numberLote,
+        CONST_STATUS_ALL.email_lots_status.disrupted.id
+      );
       return MessageUtils(
         true,
         CONST_STATUS_CODE.internalServerError.code,
